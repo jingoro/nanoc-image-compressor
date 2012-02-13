@@ -11,67 +11,66 @@ describe Nanoc::Filters::ImageCompressor do
     subject.assigns[:item] = item
     subject.assigns[:item_rep] = item_rep
   end
+  
+  let(:extension) { path.sub(/^.+\.([a-z]+)$/, '\1') }
+  let(:output_size) { File.size subject.output_filename }
+  
+  def self.it_should_compress_to_less_than(max_size)
 
-  def self.it_should_filter_implicitly
-    it 'should filter implicitly' do
+    it 'should compress implicitly' do
       subject.run path
-      File.read(subject.output_filename).size.should == expected_size
+      output_size.should be < max_size
     end
+
+    it 'should compress explicitly' do
+      subject.run path, :type => extension
+      output_size.should be < max_size
+    end
+
   end
   
-  def self.it_should_filter_explicitly
-    it 'should filter explicitly' do
-      subject.run path, :type => extension
-      File.read(subject.output_filename).size.should == expected_size
+  def self.it_should_not_compress
+
+    it 'should pass through implicitly' do
+      subject.run path
+      output_size.should == File.size(path)
     end
+
+    it 'should pass through explicitly' do
+      subject.run path, :type => extension
+      output_size.should == File.size(path)
+    end
+
   end
 
   context 'jpg image' do
-    let(:jpg_path) { File.expand_path '../test.jpg', __FILE__ }
-    let(:path) { jpg_path }
-    let(:extension) { 'jpg' }
-    let(:expected_size) { 285 }
-    it_should_filter_implicitly
-    it_should_filter_explicitly
+    let(:path) { File.expand_path '../test.jpg', __FILE__ }
+    it_should_compress_to_less_than 300
+  end
 
-    context 'jpeg extension' do
-      let(:path) do
-        file = Tempfile.new(['test', '.jpeg'])
-        file.write(File.read(jpg_path))
-        file.close
-        file.path
-      end
-      let(:extension) { 'jpeg' }
-      it_should_filter_implicitly
-      it_should_filter_explicitly
+  context 'jpeg image' do
+    let(:path) do
+      file = Tempfile.new(['test', '.jpeg'])
+      file.write File.read(File.expand_path('../test.jpg', __FILE__))
+      file.close
+      file.path
     end
+    it_should_compress_to_less_than 300
   end
   
   context 'png image' do
     let(:path) { File.expand_path '../test.png', __FILE__ }
-    let(:extension) { 'png' }
-    let(:expected_size) { 1814 }
-    it_should_filter_implicitly
-    it_should_filter_explicitly
+    it_should_compress_to_less_than 1900
   end
 
   context 'gif image' do
     let(:path) { File.expand_path '../test.gif', __FILE__ }
-    let(:extension) { 'gif' }
-    let(:expected_size) { File.size(path) }
-    it_should_filter_implicitly
-    it_should_filter_explicitly
+    it_should_not_compress
   end
   
   context 'text file' do
     let(:path) { __FILE__ }
-    let(:extension) { 'txt' }
-    let(:expected_size) { File.size(path) }
-    it_should_filter_implicitly
-    it_should_filter_explicitly
-  end
-  
-  def output_size
+    it_should_not_compress
   end
   
 end
