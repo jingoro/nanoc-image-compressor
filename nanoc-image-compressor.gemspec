@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   
   gem.add_dependency 'nanoc', '>= 3.3.0'
   gem.add_dependency 'sprockets-image_compressor'
+  gem.add_development_dependency 'rake'
   gem.add_development_dependency 'rspec'
   gem.add_development_dependency 'yard'
   gem.add_development_dependency 'bluecloth'
