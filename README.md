@@ -1,5 +1,7 @@
 # Nanoc Image Compressor
 
+[![Build Status](https://secure.travis-ci.org/jingoro/nanoc-image-compressor.png?branch=master)](http://travis-ci.org/jingoro/nanoc-image-compressor)
+
 A [nanoc](http://nanoc.stoneship.org/) filter that compresses `gif`, `jpg` and `png` images losslessly.
 
 ## Installation
