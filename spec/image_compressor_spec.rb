@@ -1,7 +1,14 @@
 require 'tempfile'
+require 'fileutils'
+
 require 'nanoc/filters/image_compressor'
 
 describe Nanoc::Filters::ImageCompressor do
+  
+  let(:gif_path) { File.expand_path('../test.gif', __FILE__) }
+  let(:jpg_path) { File.expand_path('../test.jpg', __FILE__) }
+  let(:png_path) { File.expand_path('../test.png', __FILE__) }
+  let(:run_options) { { :pngout => false } }
   
   before do
     item = double('item')
@@ -14,63 +21,50 @@ describe Nanoc::Filters::ImageCompressor do
   
   let(:extension) { path.sub(/^.+\.([a-z]+)$/, '\1') }
   let(:output_size) { File.size subject.output_filename }
-  
-  def self.it_should_compress_to_less_than(max_size)
-
-    it 'should compress implicitly' do
-      subject.run path
-      output_size.should be < max_size
-    end
-
-    it 'should compress explicitly' do
-      subject.run path, :type => extension
-      output_size.should be < max_size
-    end
-
-  end
-  
-  def self.it_should_not_compress
-
-    it 'should pass through implicitly' do
-      subject.run path
-      output_size.should == File.size(path)
-    end
-
-    it 'should pass through explicitly' do
-      subject.run path, :type => extension
-      output_size.should == File.size(path)
-    end
-
-  end
 
   context 'jpg image' do
-    let(:path) { File.expand_path '../test.jpg', __FILE__ }
-    it_should_compress_to_less_than 300
+    let(:path) { jpg_path }
+    it 'should compress' do
+      subject.run path, run_options
+      output_size.should be < 300
+    end
   end
-
+  
   context 'jpeg image' do
     let(:path) do
       file = Tempfile.new(['test', '.jpeg'])
-      file.write File.read(File.expand_path('../test.jpg', __FILE__))
       file.close
+      FileUtils.cp jpg_path, file.path
       file.path
     end
-    it_should_compress_to_less_than 300
+    it 'should compress' do
+      subject.run path, run_options
+      output_size.should be < 300
+    end
   end
   
   context 'png image' do
-    let(:path) { File.expand_path '../test.png', __FILE__ }
-    it_should_compress_to_less_than 1900
+    let(:path) { png_path }
+    it 'should compress' do
+      subject.run path, run_options
+      output_size.should be < 1900
+    end
   end
-
+  
   context 'gif image' do
-    let(:path) { File.expand_path '../test.gif', __FILE__ }
-    it_should_not_compress
+    let(:path) { gif_path }
+    it 'should compress' do
+      subject.run path, run_options
+      output_size.should be < 400
+    end
   end
   
   context 'text file' do
     let(:path) { __FILE__ }
-    it_should_not_compress
+    it 'should pass through' do
+      subject.run path, run_options
+      output_size.should == File.size(__FILE__)
+    end
   end
   
 end

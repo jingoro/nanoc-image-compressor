@@ -1,12 +1,12 @@
 require 'fileutils'
+require 'image_optim'
 require 'nanoc'
-require 'sprockets/image_compressor'
 
 module Nanoc
   module Filters
     class ImageCompressor < Nanoc::Filter
       
-      VERSION = '0.0.1'
+      VERSION = '0.1.0'
 
       identifier :image_compressor
       type :binary
@@ -14,25 +14,13 @@ module Nanoc
       # Compresses the content with Sprockets::ImageCompressor.
       #
       # @param [String] filename The filename to compress
-      # @option params [String] :type ('auto') png, jpg or auto
+      # @param [Hash] params Passed through to ImageOptim.new
       # @return [void]
       def run(filename, params={})
-        type = (params[:type] || 'auto').to_s.downcase
-        type = filetype_guess(filename) if type == 'auto'
-        content = File.read(filename)
-        compressor = case type
-          when 'png'
-            content = Sprockets::ImageCompressor::PngCompressor.new.compress(content)
-          when 'jpg', 'jpeg'
-            content = Sprockets::ImageCompressor::JpgCompressor.new.compress(content)
-          end
-        File.open(output_filename, 'wb') { |f| f.write content }
-      end
-      
-    private
-    
-      def filetype_guess(filename)
-        filename.sub(/^.+\.([a-z]+)$/i, '\1').downcase
+        io = ImageOptim.new(params.merge(:threads => false))
+        result = io.optimize_image(filename)
+        path = result ? result.to_s : filename
+        FileUtils.cp path, output_filename
       end
 
     end
