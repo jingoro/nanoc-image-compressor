@@ -5,9 +5,9 @@ require 'nanoc/filters/image_compressor'
 
 describe Nanoc::Filters::ImageCompressor do
   
-  let(:gif_path) { File.expand_path('../test.gif', __FILE__) }
-  let(:jpg_path) { File.expand_path('../test.jpg', __FILE__) }
-  let(:png_path) { File.expand_path('../test.png', __FILE__) }
+  let(:gif_path) { File.expand_path('../fixtures/test.gif', __FILE__) }
+  let(:jpg_path) { File.expand_path('../fixtures/test.jpg', __FILE__) }
+  let(:png_path) { File.expand_path('../fixtures/test.png', __FILE__) }
   let(:run_options) { { :pngout => false } }
   
   before do
@@ -22,6 +22,37 @@ describe Nanoc::Filters::ImageCompressor do
   let(:extension) { path.sub(/^.+\.([a-z]+)$/, '\1') }
   let(:output_size) { File.size subject.output_filename }
 
+  context 'image whose output permission changes' do
+    
+    def image_with_mode(mode)
+      file = Tempfile.new(['test', '.jpg'])
+      file.close
+      FileUtils.cp jpg_path, file.path
+      File.chmod mode, file.path
+      file.path
+    end
+    
+    def mode_of(path)
+      File.stat(path).mode & 0777
+    end
+    
+    it 'should match the input file whose mode is private' do
+      subject.run image_with_mode(0600), run_options
+      mode_of(subject.output_filename).should == 0600
+    end
+
+    it 'should match the input file whose mode is public' do
+      subject.run image_with_mode(0644), run_options
+      mode_of(subject.output_filename).should == 0644
+    end
+
+    it 'should match the input file whose mode is world readable' do
+      subject.run image_with_mode(0666), run_options
+      mode_of(subject.output_filename).should == 0666
+    end
+
+  end
+
   context 'jpg image' do
     let(:path) { jpg_path }
     it 'should compress' do
@@ -35,6 +66,7 @@ describe Nanoc::Filters::ImageCompressor do
       file = Tempfile.new(['test', '.jpeg'])
       file.close
       FileUtils.cp jpg_path, file.path
+      File.chmod 0644, file.path
       file.path
     end
     it 'should compress' do

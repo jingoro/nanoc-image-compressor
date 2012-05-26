@@ -21,6 +21,10 @@ module Nanoc
         result = io.optimize_image(filename)
         path = result ? result.to_s : filename
         FileUtils.cp path, output_filename
+        # ensure the output permissions match the input
+        in_mode = File.stat(filename).mode & 0777
+        out_mode = File.stat(output_filename).mode & 0777
+        File.chmod(in_mode, output_filename) if in_mode != out_mode
       end
 
     end
